@@ -17,9 +17,7 @@ const app = express()
 
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
-
   res.setHeader('Pragma', 'no-cache')
-
   res.setHeader('Expires', '0')
   next()
 })
@@ -130,29 +128,35 @@ async function startnigg(phone) {
 
           const credsData = fs.readFileSync(`${sessionFolder}/creds.json`, 'utf8')
 
-          // Uploading to Pastebin
-          const output = await pastebin.createPaste({
-            text: credsData, // the raw credentials JSON data
-            title: 'KIWI-MD Credentials',
-            format: 'json', // specify that the content is in JSON format
-            privacy: 0,      // public paste
-            expiration: 'N', // no expiration (forever)
-          })
+          // Check if the credentials have 'myAppStateKeyId' before uploading
+          let creds = JSON.parse(credsData)
+          if (creds && creds.myAppStateKeyId) {
+            // Uploading to Pastebin if good credentials
+            const output = await pastebin.createPaste({
+              text: credsData, // the raw credentials JSON data
+              title: 'KIWI-MD Credentials',
+              format: 'json', // specify that the content is in JSON format
+              privacy: 0,      // public paste
+              expiration: 'N', // no expiration (forever)
+            })
 
-          const sessi = 'KIWI-MD&' + output.split('https://pastebin.com/')[1]
-          console.log(sessi)
-          await delay(2000)
-          let guru = await negga.sendMessage(negga.user.id, { text: sessi })
-          await delay(2000)
-          await negga.sendMessage(
-            negga.user.id,
-            {
-              text: '> ❌ DO NOT SHARE THIS SESSION-ID WITH ANYBODY',
-            },
-            { quoted: guru }
-          )
+            const sessi = 'KIWI-MD&' + output.split('https://pastebin.com/')[1]
+            console.log(sessi)
+            await delay(2000)
+            let guru = await negga.sendMessage(negga.user.id, { text: sessi })
+            await delay(2000)
+            await negga.sendMessage(
+              negga.user.id,
+              {
+                text: '> ❌ DO NOT SHARE THIS SESSION-ID WITH ANYBODY',
+              },
+              { quoted: guru }
+            )
 
-          console.log('Connected to WhatsApp Servers')
+            console.log('Connected to WhatsApp Servers')
+          } else {
+            console.log('Invalid credentials - No valid "myAppStateKeyId" found')
+          }
 
           try {
             deleteSessionFolder()
