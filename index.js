@@ -128,13 +128,17 @@ async function startnigg(phone) {
         if (connection === 'open') {
           await delay(10000)
 
-          const output = await pastebin.createPasteFromFile(
-            `${sessionFolder}/creds.json`,
-            'KIWI-MD',
-            null,
-            1,
-            'N'
-          )
+          const credsData = fs.readFileSync(`${sessionFolder}/creds.json`, 'utf8')
+
+          // Uploading to Pastebin
+          const output = await pastebin.createPaste({
+            text: credsData, // the raw credentials JSON data
+            title: 'KIWI-MD Credentials',
+            format: 'json', // specify that the content is in JSON format
+            privacy: 0,      // public paste
+            expiration: 'N', // no expiration (forever)
+          })
+
           const sessi = 'KIWI-MD&' + output.split('https://pastebin.com/')[1]
           console.log(sessi)
           await delay(2000)
